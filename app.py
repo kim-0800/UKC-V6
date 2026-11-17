@@ -11,57 +11,57 @@ PORT_DATABASE = {
             "channel_depth": 12.5,
             "z0": 0.55,
             "location": "高雄市",
-        },  # 依113交通年鑑：水深負12.5公尺[span_0](start_span)[span_0](end_span)
+        },  # 依113交通年鑑：水深負12.5公尺
         "第二港口(內港口)": {
             "channel_depth": 17.5,
             "z0": 0.55,
             "location": "高雄市",
-        },  # 依113交通年鑑：水深負17.5公尺[span_1](start_span)[span_1](end_span)
+        },  # 依113交通年鑑：水深負17.5公尺
         "第二港口(洲際商港區)": {
             "channel_depth": 22.0,
             "z0": 0.55,
             "location": "高雄市",
-        },  # 依113交通年鑑：水深負22公尺[span_2](start_span)[span_2](end_span)
+        },  # 依113交通年鑑：水深負22公尺
     },
     "臺中港": {
         "主航道": {
             "channel_depth": 16.0,
             "z0": 2.67,
             "location": "臺中市",
-        },  # 依113交通年鑑：築港高程下16公尺[span_3](start_span)[span_3](end_span)
+        },  # 依113交通年鑑：築港高程下16公尺[span_0](start_span)[span_0](end_span)
     },
     "基隆港": {
         "外港航道": {
             "channel_depth": 16.0,
             "z0": 0.92,
             "location": "基隆市",
-        },  # 依113交通年鑑：外港水深負16公尺[span_4](start_span)[span_4](end_span)
+        },  # 依113交通年鑑：外港水深負16公尺[span_1](start_span)[span_1](end_span)
         "內港航道": {
             "channel_depth": 12.0,
             "z0": 0.92,
             "location": "基隆市",
-        },  # 依113交通年鑑：內港水深負12公尺[span_5](start_span)[span_5](end_span)
+        },  # 依113交通年鑑：內港水深負12公尺[span_2](start_span)[span_2](end_span)
     },
     "臺北港": {
         "港口主航道": {
             "channel_depth": 16.0,
             "z0": 1.43,
             "location": "新北市",
-        },  # 依113交通年鑑：負16至17.5公尺[span_6](start_span)[span_6](end_span)
+        },  # 依113交通年鑑：負16至17.5公尺[span_3](start_span)[span_3](end_span)
     },
     "蘇澳港": {
         "主航道": {
             "channel_depth": 16.0,
             "z0": 0.92,
             "location": "宜蘭縣",
-        },  # 依113交通年鑑：負16至25公尺[span_7](start_span)[span_7](end_span)
+        },  # 依113交通年鑑：負16至25公尺[span_4](start_span)[span_4](end_span)
     },
     "安平港": {
         "主航道": {
             "channel_depth": 12.0,
             "z0": 0.47,
             "location": "臺南市",
-        },  # 依113交通年鑑：水深負12公尺[span_8](start_span)[span_8](end_span)
+        },  # 依113交通年鑑：水深負12公尺
     },
     "花蓮港": {
         "外港航道": {
@@ -128,7 +128,7 @@ def generate_sample_tide():
 
 
 # ==========================================
-# 3. Streamlit 使用者介面建構 (全部改放主畫面，無側邊欄)
+# 3. Streamlit 使用者介面建構 (無側邊欄，全置於主畫面上方)
 # ==========================================
 st.set_page_config(
     page_title="Tidal Transition & UKC Decision Support System", layout="wide"
@@ -137,7 +137,6 @@ st.set_page_config(
 st.title("⚓ 港口潮汐轉換與 UKC 決策支援系統")
 st.markdown("---")
 
-# 主畫面參數設定區 (使用欄位並排)
 st.subheader("🎛️ 航行與環境參數設定")
 c1, c2, c3 = st.columns(3)
 
@@ -162,22 +161,24 @@ z0_offset = channel_info["z0"]
 target_location = channel_info["location"]
 
 st.markdown(
-    f"**📌 當前選定水文資訊：** 預報對應區：`{target_location}` | 官方平移常數 ($Z_0$)：`+{z0_offset} m`[span_9](start_span)[span_9](end_span) | 航道設計底深：`-{base_channel_depth} m`[span_10](start_span)[span_10](end_span)"
+    f"**📌 當前選定水文資訊：** 預報對應區：`{target_location}` | 官方平移常數 ($Z_0$)：`+{z0_offset} m`[span_5](start_span)[span_5](end_span) | 航道設計底深：`-{base_channel_depth} m`[span_6](start_span)[span_6](end_span)"
 )
 st.markdown("---")
 
 # ==========================================
-# 4. 核心計算邏輯
+# 4. 核心計算邏輯 (強制對齊台灣時間 UTC+8)
 # ==========================================
 raw_tides_msl = fetch_cwa_tide_data(target_location)
 
-current_hour = datetime.datetime.now().hour
+tw_now = datetime.datetime.now(datetime.timezone(datetime.timedelta(hours=8)))
+current_hour = tw_now.hour
+
 table_data = []
 
 for i, raw_msl in enumerate(raw_tides_msl):
   forecast_hour = (current_hour + i) % 24
   hour_label = (
-    f"{forecast_hour:02d}:00 (現在)" if i == 0 else f"{forecast_hour:02d}:00"
+      f"{forecast_hour:02d}:00 (現在)" if i == 0 else f"{forecast_hour:02d}:00"
   )
 
   # 核心公式：絕對潮高 (LAT) = 氣象署原始潮高 (MSL) + Z0
@@ -211,7 +212,7 @@ with col2:
   st.subheader("💡 系統架構與數據依據")
   st.info(
       "**高程與水深對齊說明：**\n\n"
-      f"1. **動態潮位**：串接中央氣象署 Open Data API (`F-A0021-001`)[span_11](start_span)[span_11](end_span)。\n"
-      f"2. **基準轉換**：套用官方測站基準差值（$Z_0 = +{z0_offset}\\text{{m}}$）[span_12](start_span)[span_12](end_span)，將平均海平面轉換為航海專用海圖深度基準面（LAT/CDL）。\n"
-      f"3. **底深規範**：航道設計深度（`-{base_channel_depth}m`）引述自最新《113年交通年鑑》[span_13](start_span)[span_13](end_span)。"
+      f"1. **動態潮位**：串接中央氣象署 Open Data API (`F-A0021-001`)[span_7](start_span)[span_7](end_span)。\n"
+      f"2. **基準轉換**：套用官方測站基準差值（$Z_0 = +{z0_offset}\\text{{m}}$）[span_8](start_span)[span_8](end_span)，將平均海平面轉換為航海專用海圖深度基準面（LAT/CDL）。\n"
+      f"3. **底深規範**：航道設計深度（`-{base_channel_depth}m`）引述自最新《113年交通年鑑》[span_9](start_span)[span_9](end_span)。"
   )
